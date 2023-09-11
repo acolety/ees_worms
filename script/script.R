@@ -6,30 +6,28 @@
 # libraries ----
 library(skimr)
 library(tidyverse)
-install.packages("scatterplot3d")
-library(scatterplot3d)
-library(vegan)
 library(devtools)
 devtools::install_github("cmartin/ggConvexHull")
 
 # loading data ----
-worms <- read.csv("worms/earthworm_data.csv")
+worms <- read.csv("data/earthworm_data.csv")
 
 # viewing and cleaning data ----
 view(worms)
 skim(worms)
 
-worms_sub <- filter(worms, habitat %in% c("unmowed_grassland","mowed_grassland"))  # removing woodland data
+worms_sub <- filter(worms, habitat %in% c("unmowed_grassland",
+                                          "mowed_grassland"))  # removing woodland data
 view(worms_sub)
 
 # raw data visualization ----
 (rough <- ggplot(worms_sub, aes(x = habitat, y = earthworm_count)) +
   geom_boxplot() +
-  theme_classic())  # any difference between worm counts in 2 habitats
+  theme_classic())  # any difference between worm counts in 2 habitats?
 
 (rough2 <- ggplot(worms_sub, aes(x = soil_ph, y = earthworm_count, color = habitat)) +
     geom_point() +
-    theme_classic())  # pH impact on earthworm count
+    theme_classic())  # pH impact on earthworm count?
 
 # Data wrangling ----
 
@@ -70,19 +68,14 @@ comm <- worms_sub %>%
   select(-c(date, soil_t1, soil_t2, soil_t3, soil_t4, soil_m1, soil_m2, soil_m3,
             soil_m4, anecic_prop, endogeic_prop, adult_prop, juv_prop))
 
-## by counts
+## plotting ecotype community structure overlap by count
 (community <- ggplot(comm, aes(x = epigeic, y = nonepi, col = habitat)) +
   geom_point() +
   ggConvexHull::geom_convexhull(alpha = 0.3, aes(fill = habitat)) +
   theme_classic())
 
-## by proportions
-(community <- ggplot(comm, aes(x = epigeic_prop, y = nonepi_prop, col = habitat)) +
-    geom_point() +
-    geom_polygon() +
-    theme_classic())
 
-# bar chart for community structure
+# bar chart for community structure by ecotype
 
 ## changing data to long format
 comm_long <- comm %>% 
@@ -97,4 +90,5 @@ View(comm_long)
     theme_classic())
 
 # saving figures ----
-ggsave("worms/img/community_struc_bar.png", plot = community_bar, width = 5, height = 5)
+ggsave("img/community_struc_bar.png", plot = community_bar, width = 7, height = 5)
+ggsave("img/community_struc_scatter.png", plot = community, width = 7, height = 5)
