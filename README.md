@@ -3,7 +3,7 @@
 Worm project from the 2023 EES 4th year field course, exploring the question "How do soil characteristics and soil type influence earthworm abundance and diversity?"
 
 Research questions explored in this project are:
-1. Does the management of habitats affect earthworm abundance/assemblage ​
+1. Does the management of habitats affect earthworm abundance/assemblage?
 2. Does habitat type affect the assemblage of adult to juvenile earthworms?
 3. Does habitat type affect the assemblage of earthworm ecotypes​?
 4. To what extent do soil environmental variables affect earthworm abundance/biodiversity/assemblage?​
