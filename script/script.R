@@ -41,54 +41,116 @@ view(worms_sub)
            juv_prop = juveniles / earthworm_count))  # adding columns for age proportions
 
 
+## checking distributions of ecotypes
+### checking proportion distributions
+hist(worms_sub$epigeic_prop, breaks = 30)
+hist(worms_sub$anecic_prop, breaks = 30)
+hist(worms_sub$endogeic_prop, breaks = 30)  # looks normal enough 
+
+
 # modelling ----
 
 ## modelling worm abundance as impacted by habitat
 a_mod <- glm(earthworm_count ~ habitat, data = worms_sub, family = poisson)
 summary(a_mod)
-anova <- aov(a_mod)
-plot(a_mod)
+plot(a_mod)  # significant difference between worm abundance in 2 habitats, due 
+             # to juvenile abundance differences
+
+a_mod <- glm(adults ~ habitat, data = worms_sub, family = poisson)
+summary(a_mod)
+plot(a_mod)  # checking just abundance for juveniles
+
+epi_hab <- glm(nonepi ~ habitat, data = comm, family = "poisson")
+summary(epi_hab)
 
 
-### CHECK FOR OVERDISPERSION
+## modelling environmental factors against habitats
+MoistL_model <- glm(soil_m_avg ~ habitat, data = worms_sub)
+summary(MoistL_model)  # no sig diff in moisture bt habitats
 
-## modelling worm communities by proportions
-### checking proportion distributions
-hist(worms_sub$epigeic_prop, breaks = 30)
-hist(worms_sub$anecic_prop, breaks = 30)
-hist(worms_sub$endogeic_prop, breaks = 30)  # looks normal enough that we'll run with it
+Temphdel <- lm(soil_t_avg ~ habitat, data = worms_sub)
+summary(TempL_model) # no sig diff bt soil temps bt habitats
+
+Soil_ph_hmodel <- lm(soil_ph ~ habitat, data = worms_sub)
+summary(Soil_ph_hmodel) # soil pH not sig diff bt habitats
+
+
+## modelling environmental factors against worms
+Tempecmodel <- glm(soil_t_avg ~ earthworm_count, data = worms_sub)
+summary(Tempecmodel) # No sig diff bt worm abundances with
+
+TempWADmodel <- glm(soil_t_avg ~ adults, data = worms_sub)
+summary(TempWADmodel) # Relationship bt soil temp and adult abundance, 
+                      # prob due to epigeic relationship
+
+TempWJmodel <- glm(soil_t_avg ~ juveniles, data = worms_sub)
+summary(TempWJmodel) # no relationship bt juveniles and temp
+
+Soil_ph_ecmodel <- glm(soil_ph ~ earthworm_count, data = worms_sub)
+summary(Soil_ph_ecmodel) # soil pH unrelated to general earthworm abund
+
 
 
 # plotting community structure by UG vs MG ----
 
-## setting up data
+## more data wrangling
 comm <- worms_sub %>% 
   mutate(nonepi_prop = anecic_prop + endogeic_prop, 
          nonepi = anecic + endogeic) %>% 
   select(-c(date, soil_t1, soil_t2, soil_t3, soil_t4, soil_m1, soil_m2, soil_m3,
             soil_m4, anecic_prop, endogeic_prop, adult_prop, juv_prop))
 
-## plotting ecotype community structure overlap by count
-(community <- ggplot(comm, aes(x = epigeic, y = nonepi, col = habitat)) +
-  geom_point() +
-  ggConvexHull::geom_convexhull(alpha = 0.3, aes(fill = habitat)) +
-  theme_classic())
+## plotting ecotype community structures by count
+(community <- ggplot(comm, aes(x = epigeic, y = nonepi, colour = habitat))     +
+    geom_point()                                                               + 
+    ggConvexHull::geom_convexhull(alpha = 0.3, aes(fill = habitat))            +
+    theme_classic())                                                           +
+  xlab("Average number of adult epigeic worms per plot")                       +
+  ylab("Average number of adult non-epigeic worms per plot")                   +
+  scale_fill_manual(name = "Habitat", values=c("#8BB26C", "#E16B7B"), 
+                    labels = c("Mowed grassland", "Unmowed grassland"))        +
+  scale_colour_manual(name = "Habitat", values=c("#8BB26C", "#E16B7B"), 
+                      labels = c("Mowed grassland", "Unmowed grassland"))
 
 
-# bar chart for community structure by ecotype
+# Bar chart for community structure by ecotype and abundances----
 
 ## changing data to long format
 comm_long <- comm %>% 
-  pivot_longer(cols = c('epigeic', 'endogeic', 'anecic'),
+  pivot_longer(cols = c('epigeic', 'endogeic', 'anecic', 'juveniles'),
                names_to = "ecotype", 
                values_to = "count")
-View(comm_long)
 
-## creating bar chart
-(community_bar <- ggplot(comm_long, aes(x = habitat, y = count, fill = ecotype)) +
-    geom_bar(stat = "identity", position = "dodge") +
+## plotting
+### creating smaller dataframe w standard errors
+comm_long_errors <- comm_long %>% 
+  group_by(habitat, ecotype) %>% 
+  summarise(mean = mean(count), se = (sd(count)/sqrt(length(count)))) %>% 
+  ungroup()
+
+### bar chart with new data frame
+(community_bar_err <- ggplot(comm_long_errors, aes(x = habitat, y = mean, 
+                                                   fill = ecotype))            +
+    geom_bar(stat = "identity", position = "dodge")                            +
+    geom_errorbar(aes(ymin = mean - se, ymax = mean + se, y = mean), 
+                  width=0.25, position = position_dodge(0.9))                  +
+    theme_classic())                                                           +
+  xlab("Habitat")                                                              + 
+  ylab("Average number of worms per plot")                                     +
+  scale_fill_manual(name = "Ecotype", values = c("#8BB26C", "#225235", 
+                                                 "#E16B7B", "#A9BFC4"), 
+                    labels = c("Anecic", "Endogeic", "Epigeic", "Juveniles"))  +
+  scale_x_discrete(labels = c("Mowed grassland", "Unmowed grassland"))         +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)))
+
+## boxplot to check
+(community_box <- ggplot(comm_long, aes(x = habitat, y = count, 
+                                        fill = ecotype))                       +
+    geom_boxplot()                                                             +
     theme_classic())
 
+
 # saving figures ----
-ggsave("img/community_struc_bar.png", plot = community_bar, width = 7, height = 5)
+ggsave("img/community_struc_bar.png", plot = community_bar_err, width = 7,
+       height = 5)
 ggsave("img/community_struc_scatter.png", plot = community, width = 7, height = 5)
