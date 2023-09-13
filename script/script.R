@@ -156,7 +156,11 @@ comm_long_errors <- comm_long %>%
 # Plotting habitat worm abundance against soil pH ----
 
 (habitat_ph <- ggplot(worms, aes(x = habitat, y = soil_ph, color = habitat))   +
-    geom_boxplot(color = c("#225235","#8BB26C", "#E16B7B")) +
+    geom_boxplot() +
+    scale_colour_manual(name = "Habitat", values=c("#225235", "#E16B7B", 
+                                                   "#8BB26C"), 
+                       labels = c("Mixed Woodland", "Mowed grassland",
+                                  "Unmowed grassland"))                        +
     labs(x = "Habitat", y = "Soil pH") +
     scale_x_discrete(labels = c("Mixed woodland", "Mowed grassland", 
                                "Unmowed grassland"))                           +
