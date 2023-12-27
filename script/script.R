@@ -310,7 +310,7 @@ comm_long_errors2 <- comm_long %>%
                            epi_x_temp, ncol = 2, nrow = 2))
 
 # saving figures ----
-ggsave("worms/img/community_struc_bar.png", plot = community_bar_err, width = 7,
+ggsave("img/community_struc_bar.png", plot = community_bar_err, width = 7,
        height = 5)
 ggsave("img/community_struc_scatter.png", plot = community, width = 7, height = 5)
 ggsave("img/habitat_ph.png", plot = habitat_ph, width = 7, height = 5)
